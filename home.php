@@ -249,40 +249,45 @@ include("php/config.php");
 
             <!-- Main content for products -->
             <div class="col-md-9">
-<div class="row mt-">
-    <?php
-    $kw = isset($_GET['kw']) ? mysqli_real_escape_string($con, $_GET['kw']) : '';
-    $pt = isset($_GET['pt']) ? $_GET['pt'] : [];  // Ensure $pt is initialized as an array
+                <div class="row">
+                    <?php
+                    $kw = isset($_GET['kw']) ? mysqli_real_escape_string($con, $_GET['kw']) : '';
+                    $pt = isset($_GET['pt']) ? $_GET['pt'] : [];  // Ensure $pt is initialized as an array
 
-    $category_filter = '';
-    if (!empty($pt)) {
-        $pt_ids = implode("','", array_map(function($pt_id) use ($con) {
-            return mysqli_real_escape_string($con, $pt_id);
-        }, $pt));
-        $category_filter = "AND pt_id IN ('$pt_ids')";
-    }
+                    $category_filter = '';
+                    if (!empty($pt)) {
+                        $pt_ids = implode("','", array_map(function($pt_id) use ($con) {
+                            return mysqli_real_escape_string($con, $pt_id);
+                        }, $pt));
+                        $category_filter = "AND pt_id IN ('$pt_ids')";
+                    }
 
-    // Fetch products based on search keyword and category filter
-    $query = "SELECT * FROM product WHERE p_name LIKE '%$kw%' $category_filter";
-    $result = mysqli_query($con, $query);
+                    // Fetch products based on search and selected categories
+                    $sql = "SELECT * FROM product WHERE (p_name LIKE '%$kw%' OR p_detail LIKE '%$kw%') $category_filter";
+                    $rs = mysqli_query($con, $sql);
 
-    while ($row = mysqli_fetch_array($result)) {
-        ?>
-        <div class="col-md-3"> <!-- Change from col-md-4 to col-md-3 for 4 columns -->
-            <div class="product-card">
-                <img src="images/<?php echo $row['p_picture']; ?>" class="card-img-top" alt="<?php echo $row['p_name']; ?>">
-                <div class="card-body">
-                    <h5 class="card-title"><?php echo $row['p_name']; ?></h5>
-                    <p class="price">ราคา: <?php echo number_format($row['p_price'], 2); ?> ฿</p>
-                    <a href="product.php?p_id=<?php echo $row['p_id']; ?>" class="btn btn-primary">ดูรายละเอียด</a>
+                    if (mysqli_num_rows($rs) > 0) {
+                        // Display products in a 4x4 grid
+                        while ($data = mysqli_fetch_array($rs, MYSQLI_BOTH)) {
+                            ?>
+                            <div class="col-md-3 col-sm-6 mb-4">
+                                <div class="product-card">
+                                    <img src="images/<?php echo htmlspecialchars($data['p_picture']); ?>" alt="<?php echo htmlspecialchars($data['p_name']); ?>">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title"><?php echo htmlspecialchars($data['p_name']); ?></h5>
+                                        <p class="price"><?php echo number_format($data['p_price'], 0); ?> บาท</p>
+                                        <a href="basket.php?id=<?php echo $data['p_id']; ?>" class="btn btn-primary">หยิบลงตะกร้า</a>
+                                        <a href="view_product.php?id=<?php echo $data['p_id']; ?>" class="btn btn-primary">ดูรายละเอียด</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                    } else {
+                        echo "<div class='col-12'><h4>ไม่พบสินค้าที่ค้นหา</h4></div>";
+                    }
+                    ?>
                 </div>
-            </div>
-        </div>
-    <?php
-    }
-    ?>
-</div>
-
             </div>
         </div>
     </div>
